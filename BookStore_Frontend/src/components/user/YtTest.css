@@ -1,0 +1,39 @@
+from googleapiclient.discovery import build
+from collections import Counter
+
+API_KEY = "YOUR_API_KEY"  # 換成你的 API key
+                            SEARCH_QUERY = "你的標題關鍵字"  # 要搜尋的標題關鍵字
+                                                               MAX_RESULTS = 200  # 想抓幾筆影片
+
+                                                                                    youtube = build("youtube", "v3", developerKey=API_KEY)
+
+all_channels = []
+               next_page_token = None
+                                 fetched = 0
+
+while fetched < MAX_RESULTS:
+                request = youtube.search().list(
+q=SEARCH_QUERY,
+  part="snippet",
+type="video",
+maxResults=min(50, MAX_RESULTS - fetched),
+pageToken=next_page_token
+)
+response = request.execute()
+
+for item in response['items']:
+                             channel = item['snippet']['channelTitle']
+all_channels.append(channel)
+
+fetched += len(response['items'])
+next_page_token = response.get('nextPageToken')
+if not next_page_token:
+break
+
+# 統計頻道出現次數
+counter = Counter(all_channels)
+top_channels = counter.most_common(10)  # 前 10 名
+
+print("頻道出現最多次排行：")
+for i, (channel, count) in enumerate(top_channels, 1):
+print(f"{i}. {channel} → {count} 次")
