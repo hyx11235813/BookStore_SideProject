@@ -36,7 +36,7 @@ export default {
             if (isEmpty) {
                 try {
                     const resp = await getCurrentUser();//後端透過請求頭的token獲取使用者資料
-                    if(resp.id===undefined){ //後端伺服器關閉在打開會更換token，如果這時候再用原本的token去獲取使用者會得不到資料，所以才要清除殘留的token
+                    if (resp.id === undefined) { //後端伺服器關閉在打開會更換token，如果這時候再用原本的token去獲取使用者會得不到資料，所以才要清除殘留的token
                         localStorage.removeItem('token')
                     }
                     let payload = {
@@ -51,11 +51,11 @@ export default {
             }
         },
 
-        logout({commit}){
+        logout({commit}) {
             localStorage.removeItem('token')
             localStorage.removeItem('cart')
-            commit('setUserInfo','')
-            commit('setCartProductQuantity',0)
+            commit('setUserInfo', '')
+            commit('setCartProductQuantity', 0)
 
         }
     }

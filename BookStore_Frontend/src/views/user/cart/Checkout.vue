@@ -13,9 +13,23 @@
             <input class="checkout__input" type="tel" id="phone" placeholder="" v-model="orderForm.phone" required>
             <label class="checkout__label">手機號碼</label>
           </div>
+
           <div class="checkout__field " style="grid-area: city">
-            <input class="checkout__input" type="text" id="city" placeholder="" v-model="orderForm.city" required>
-            <label class="checkout__label">城市、區</label>
+            <select class="checkout__input " v-model="selectedCity">
+              <option value="" disabled selected>城市</option>
+              <option v-for="city in cityData" :key="city.CityName" :value="city.CityName">
+                {{ city.CityName }}
+              </option>
+            </select>
+          </div>
+
+          <div class="checkout__field " style="grid-area: area">
+            <select class="checkout__input" v-model="selectedArea">
+              <option value="" disabled selected>區域</option>
+              <option v-for="area in currentArea" :key="area.ZipCode" :value="area.AreaName">
+                {{ area.AreaName }}
+              </option>
+            </select>
           </div>
           <div class="checkout__field " style="grid-area: postcode">
             <input class="checkout__input" type="number" id="postcode" placeholder="" v-model="orderForm.postcode"
@@ -61,6 +75,9 @@
   </div>
 </template>
 <script>
+import cityData from '@/assets/data/CityData.json'
+import {getUserCartInfo} from '/src/api/cart'
+
 export default {
   data() {
     return {
@@ -85,22 +102,52 @@ export default {
           bookCover: 'test',   // 與你之前的組件屬性名稱保持一致
           bookName: 'Java 入門2',
           author: 'author2',
-          price: 1002,
-          quantity: 12
+          price: 100,
+          quantity: 2
         },
         {
-          id: 2,           // 重要：後端存入 order_items 表需要此 ID
+          id: 3,           // 重要：後端存入 order_items 表需要此 ID
           bookCover: 'test',   // 與你之前的組件屬性名稱保持一致
           bookName: 'Java 入門2',
           author: 'author2',
-          price: 1002,
-          quantity: 12
+          price: 100,
+          quantity: 3
         }
       ],
+      userId: 0,
       quantity: 1,
       isSubmitting: false,
-      totalPrice: 0
+      selectedCity: '',
+      selectedArea: '',
+      cityData: cityData,
     };
+  },
+  methods: {
+    //todo 放上頁面
+    async getCartData() {
+      try {
+        const userId=  this.$store.state.userData.user.id;
+        const resp = await getUserCartInfo(userId);
+        console.log(resp.data);
+      } catch (error) {
+        console.error("獲取購物車失敗：", error);
+      }
+    }
+
+  },
+  computed: {
+    currentArea() {
+      const city = this.cityData.find(item => item.CityName === this.selectedCity);
+      return city ? city.AreaList : [];
+    },
+    totalPrice() {
+      return this.cartItems.reduce((sum, items) => {
+        return sum + (items.price * items.quantity);
+      }, 0)
+    }
+  },
+  mounted() {
+    this.getCartData();
   }
 };
 </script>
@@ -108,8 +155,10 @@ export default {
 
 <style scoped lang="scss">
 @use "@/assets/style/abstracts" as *;
-//todo:刻畫面
+
 .checkout {
+  height: 100vh;
+
   .checkout__form {
     display: flex;
     gap: 2rem;
@@ -130,13 +179,13 @@ export default {
 
     .checkout__field-group {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 1rem;
       grid-template-areas:
 
-    "name  phone"
-    "city  postcode"
-    "street street ";
+    "name  phone phone"
+    "city area area "
+    "street street postcode ";
 
       .checkout__field {
         margin-bottom: 1rem;
@@ -213,6 +262,8 @@ export default {
 
       .checkout__total {
         padding: 1rem;
+        display: flex;
+        justify-content: space-between;
       }
 
       .checkout__submit-btn {
