@@ -21,7 +21,6 @@ public class ChartController {
     }
 
 
-    //TODO 之後可能需要根據前端做調整
     @GetMapping("/chart/data")
     public Result getChartData() {
         List<Map<String, String>> countData = chartService.fetchCountData();

@@ -70,7 +70,6 @@ export const verifyToken = (data) => {
  * @param {string} data.email  電子郵件
  * @param {string} data.password  密碼
  */
-//重置密碼
 export const resetPassword = (data) => {
     return request.post(`/user/forgot-password/reset-password`, data);
 };
@@ -96,14 +95,12 @@ export const changePassword = (data) => {
  * @param {string} data.id - 用戶id
  * @param {string} data.avatar - 用戶頭像路徑（存在本地上的路徑）
  */
-//上傳頭像
 export const uploadAvatar = (data) => {
     return request.put('/user-info/upload-avatar', data);
 };
 /**
  * 儲存圖片到本地上
  */
-//透過後端儲存圖片到本地，並返回圖片下載的url
 export const uploadImage = (data) => {
     return request.post('/file/upload', data, {
         headers: {
@@ -116,7 +113,6 @@ export const uploadImage = (data) => {
  *
  * @param {String} id  用戶id
  */
-//刪除用戶頭像
 export const removeAvatar = (id) => {
     return request.put(`/user-info/remove-avatar/${id}`);
 };

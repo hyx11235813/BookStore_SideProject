@@ -144,7 +144,7 @@ export default {
       this.verifyCode = value;
     },
     returnPage() {
-      this.$router.push('/login');
+      this.$router.push('/');
     }
   },
   mounted() {

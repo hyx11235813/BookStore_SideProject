@@ -112,7 +112,6 @@ export const searchUsers = (data) => {
 const buildQueryParams = (paramsObj) => {
     return new URLSearchParams(
         Object.entries(paramsObj)
-            // eslint-disable-next-line no-unused-vars
             .filter(([_, value]) => value !== undefined && value !== null)
     ).toString()
 }

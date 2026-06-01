@@ -12,16 +12,6 @@ public class PageRequestDto {
     private Integer currentPage;
     private Integer pageSize;
 
-    //Default
-    public PageRequestDto() {
-        this.currentPage = 1;
-        this.pageSize = 10;
-    }
-
-    public PageRequestDto(Integer currentPage, Integer pageSize) {
-        this.currentPage = currentPage;
-        this.pageSize = pageSize;
-    }
 
     public Pageable toPageable() {
         return PageRequest.of(getPageIndex(), getPageSize());
@@ -29,7 +19,7 @@ public class PageRequestDto {
 
     private int getPageIndex() {
         if (currentPage <= 0) {
-            currentPage = 0;   //避免低於0報錯
+            currentPage = 0;
         } else {
             currentPage -= 1;//pageable從索引0開始，所以要-1
         }
