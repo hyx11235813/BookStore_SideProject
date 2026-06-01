@@ -87,7 +87,7 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      apiKey: 'AIzaSyBeOXpP-jqPR5Q-fwymMr3fMSJjEnKbIKI',    //googleBook api
+      apiKey: 'AIzaSyBLoMl7fxl27vNfb-8C-0LbC_WdXrSEVtg',    //googleBook api
       form: {},
       rules: {
         isbn: [
@@ -184,10 +184,11 @@ export default {
       }
       //先檢查資料庫有沒有資料，如果沒有再使用API查詢
       const isExist = await this.handleIsbnExistence(isbn);
+      console.log(isExist)
       if (!isExist) {
         axios({
           method: 'get',
-          url: `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn} & key=${this.apiKey}`
+          url: `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${this.apiKey}`
         }).then((resp) => {
           const {totalItems, items} = resp.data;
           if (totalItems !== 0) {
@@ -208,6 +209,7 @@ export default {
     async handleIsbnExistence(isbn) {
       const book = await searchBookByISBN(isbn);
       const bookData = book?.data;
+      console.log(bookData)
       if (bookData) {
         if (bookData.isDeleted) {
           await this.handleBookReList(bookData);

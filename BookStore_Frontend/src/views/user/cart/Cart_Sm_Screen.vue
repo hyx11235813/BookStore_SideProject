@@ -12,7 +12,7 @@
 
             <a class="cart__product-bookCover-a" href="#">
               <img class="cart__product-bookCover-img" :src="'data:image/jpeg;base64,' + product.bookCoverByte" alt=" "
-                   @click="generateBookUrl(product)"   @error="onImageError">
+                   @click="generateBookUrl(product)" @error="onImageError">
             </a>
             <div class="cart__products-info">
               <a class="cart__products-bookName-text " @click="generateBookUrl(product)">{{ product.bookName }}
@@ -61,7 +61,7 @@
                   }}）：</p>
                 <p class="summarize__checkout-price-text">${{ totalPrice }}</p>
               </div>
-              <div class="summarize__checkout-button">結 賬</div>
+              <div class="summarize__checkout-button" @click="goToCheckout">結 賬</div>
             </div>
           </div>
         </div>
@@ -74,19 +74,35 @@
         </p>
       </div>
     </div>
+    <MessagePopup :message="popupMessage" :isVisible="popupVisible" :type="popupType"></MessagePopup>
   </div>
 </template>
 <script>
 import cartUtils from './cartUtils.js';
 import EmptyCart from "@/views/user/cart/EmptyCart.vue";
+import {messagePopupMixin} from '@/mixins/messagePopupMixin';
+import MessagePopup from "@/components/MessagePopup.vue";
 
 export default {
-  mixins: [cartUtils],
-  components: {EmptyCart},
-  methods:{
-    onImageError(){
+  mixins: [cartUtils, messagePopupMixin],
+  components: {EmptyCart, MessagePopup},
+  methods: {
+    onImageError() {
       event.target.src = require('@/assets/images/no-image.svg');
     },
+    goToCheckout() {
+      const selected = this.products.filter(product => product.selected)
+      if (selected.length == 0) {
+        this.showPopupMessage('請先選擇商品')
+        return
+      }
+      const checkoutPayload = selected.map(product => ({
+        id: product.id,
+        quantity: product.orderQuantity
+      }))
+      sessionStorage.setItem('checkout_items', JSON.stringify(checkoutPayload))
+      this.$router.push('/checkout')
+    }
   }
 };
 

@@ -16,7 +16,6 @@ export default {
         return {
             asideList: [
                 { name: 'personalInfo', label: '個人資料', path: "/member-center/personal-info", icon: "el-icon-user-solid" },
-                { name: 'borrowRecord', label: '借書記錄', path: "/member-center/borrowRecord", icon: "el-icon-s-order" },
             ],
         }
     }, methods: {

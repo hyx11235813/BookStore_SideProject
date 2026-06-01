@@ -48,11 +48,11 @@
         <div class="checkout__summary">
           <p class="checkout__title">數量({{ quantity }})</p>
           <div v-for="item in cartItems" :key="item.id" class="checkout__item">
-            <img class="checkout__item-photo" :src="'data:image/jpeg;base64,' + item.bookCover">
+            <img class="checkout__item-photo" :src="'data:image/jpeg;base64,' + item.bookCover" @error="onImageError">
             <div class="checkout__item-detail">
               <span class="checkout__item-name">{{ item.bookName }} </span>
               <span class="checkout__item-name">{{ item.author }} </span>
-              <span class="checkout__item-quantity">數量{{ item.quantity }} </span>
+              <span class="checkout__item-quantity">數量{{ item.orderQuantity }} </span>
             </div>
             <div class="checkout__item-price">
               <span>${{ item.price }} </span>
@@ -65,8 +65,7 @@
         </div>
         <button type="submit"
                 class="checkout__submit-btn"
-                :class="{ 'checkout__submit-btn--disabled': isSubmitting }"
-                :disabled="isSubmitting">
+                :disabled="isFormValid">
           確認下單
         </button>
       </aside>
@@ -77,6 +76,8 @@
 <script>
 import cityData from '@/assets/data/CityData.json'
 import {getUserCartInfo} from '/src/api/cart'
+import {getBookById, getBookDetail, getBooksById} from "@/api/book";
+import {searchBooks} from "@/api/admin";
 
 export default {
   data() {
@@ -88,50 +89,52 @@ export default {
         postcode: '',
         address: ''
       },
-      cartItems: [
-        {
-          id: 1,           // 重要：後端存入 order_items 表需要此 ID
-          bookCover: 'test',   // 與你之前的組件屬性名稱保持一致
-          bookName: 'Java 入門',
-          author: 'author',
-          price: 100,
-          quantity: 1
-        },
-        {
-          id: 2,           // 重要：後端存入 order_items 表需要此 ID
-          bookCover: 'test',   // 與你之前的組件屬性名稱保持一致
-          bookName: 'Java 入門2',
-          author: 'author2',
-          price: 100,
-          quantity: 2
-        },
-        {
-          id: 3,           // 重要：後端存入 order_items 表需要此 ID
-          bookCover: 'test',   // 與你之前的組件屬性名稱保持一致
-          bookName: 'Java 入門2',
-          author: 'author2',
-          price: 100,
-          quantity: 3
-        }
-      ],
+      cartItems: [],
       userId: 0,
       quantity: 1,
-      isSubmitting: false,
       selectedCity: '',
       selectedArea: '',
       cityData: cityData,
     };
   },
   methods: {
-    //todo 放上頁面
+    onImageError() {
+      event.target.src = require('@/assets/images/no-image.svg');
+    },
     async getCartData() {
-      try {
-        const userId=  this.$store.state.userData.user.id;
-        const resp = await getUserCartInfo(userId);
-        console.log(resp.data);
-      } catch (error) {
-        console.error("獲取購物車失敗：", error);
+      const savedPayload = sessionStorage.getItem('checkout_items')
+      const sessionItems = savedPayload ? JSON.parse(savedPayload) : [];
+
+      const productId = sessionItems.map(item => item.id);
+      const payload = {
+        ids: productId
       }
+
+      try {
+        const resp = await getBooksById(payload)
+        const booksDetail = resp.data
+
+        //拼湊訂單數量，及後端得到的書籍資料
+        const checkoutItems = booksDetail.map(checkoutItem => {
+          const sessionTarget = sessionItems.find(sessionItem => sessionItem.id == checkoutItem.id)
+          return {
+            id: checkoutItem.id,
+            bookName: checkoutItem.bookName,
+            boName:checkoutItem.author,
+            bookCover: checkoutItem.bookCoverByte,
+            price: checkoutItem.price,
+            orderQuantity: sessionTarget ? sessionTarget.quantity : 1
+          }
+        })
+        this.cartItems = checkoutItems
+      } catch (error) {
+        console.error("獲取結帳資料失敗:", error)
+      }
+    },
+    handleOrderSubmit(){
+
+      //todo 把購買資料帶入資料庫，轉跳到購買記錄
+      console.log('s')
     }
 
   },
@@ -141,9 +144,17 @@ export default {
       return city ? city.AreaList : [];
     },
     totalPrice() {
-      return this.cartItems.reduce((sum, items) => {
-        return sum + (items.price * items.quantity);
-      }, 0)
+      return this.cartItems.reduce((sum, items) => sum + (items.price * items.orderQuantity), 0)
+    },
+    isFormValid() {
+      return (
+          !this.orderForm.name.trim() ||
+          !this.orderForm.phone.trim() ||
+          !this.selectedCity ||
+          !this.selectedArea ||
+          !this.orderForm.postcode ||
+          !this.orderForm.address.trim()
+      )
     }
   },
   mounted() {
@@ -241,9 +252,11 @@ export default {
         .checkout__item {
           display: flex;
           height: 100px;
+          gap: 10px;
 
           .checkout__item-photo {
             flex: 0 0 80px;
+            max-width: 80px;
           }
 
           .checkout__item-detail {

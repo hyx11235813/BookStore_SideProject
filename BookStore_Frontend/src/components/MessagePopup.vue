@@ -41,7 +41,6 @@ export default {
 .message-popup {
   z-index: 9;
   position: fixed;
-  width: 300px;
   left: 50%;
   bottom: 10px;
   transform: translateX(-50%);
@@ -52,13 +51,13 @@ export default {
   .message-popup__content {
     .message-popup-text {
       font-size: 14px;
-
+      text-align: center;
     }
   }
 }
 
 .message-popup--info {
-  background-color: #f5f5f5;
+  background-color: #b0b0b0;
   color: #000000;
 
 
