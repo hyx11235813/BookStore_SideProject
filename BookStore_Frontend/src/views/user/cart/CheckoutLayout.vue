@@ -5,18 +5,18 @@
      <home-header/>
     </header>
    <main>
-    <checkout/>
+    <checkout-view/>
    </main>
 
   </div>
 </template>
 <script >
 import HomeHeader from '@/components/user/MemberCenterHeader.vue';
-import Checkout from '@/views/user/cart/Checkout.vue';
+import CheckoutView from '@/views/user/cart/CheckoutView.vue';
 export default {
   components:{
     HomeHeader,
-    Checkout,
+    CheckoutView,
   }
 }
 </script>

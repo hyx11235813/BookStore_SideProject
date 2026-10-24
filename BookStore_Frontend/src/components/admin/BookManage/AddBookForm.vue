@@ -1,7 +1,7 @@
 <template>
   <div class="manage-dialog">
     <el-dialog class="manage-dialog__wrapper" width=700px
-               :visible.sync="visible" :before-close="handleClose"
+               :visible="visible" @update:visible="$emit('update:visible', $event)" :before-close="handleClose"
     >
       <div class="manage-dialog__hint" style="margin-bottom: 1rem">
         <div>測試ISBN: 9789573270126</div>
@@ -145,7 +145,7 @@ export default {
     }
   },
   methods: {
-    gerFormData() {
+    getFormData() {
       return this.form;
     },
     checkNumber(inputType, val) {

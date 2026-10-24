@@ -15,7 +15,7 @@
   </div>
 </template>
 <script>
-import Steps from "@/views/user/resetPassword/ResetPassword_CommonSteps.vue";
+import Steps from "@/views/user/resetPassword/ResetPasswordSteps.vue";
 
 export default ({
   components: {Steps},

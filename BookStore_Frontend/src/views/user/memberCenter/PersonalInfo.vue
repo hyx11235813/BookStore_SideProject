@@ -201,12 +201,7 @@ export default {
         return;
       }
 
-      let payload = {
-        id: this.userId,
-        name: this.userName
-      };
-
-      const {code} = await updateUserName(payload);
+      const {code} = await updateUserName({name: this.userName});
       if (code !== 200) {
         this.showErrorMessage()
         return;
@@ -215,7 +210,7 @@ export default {
       this.isRenameModalVisible = false;
       this.showPopupMessage('名稱已更新', 'info');
 
-      await this.getUserInfo(this.userId);
+      await this.getUserInfo();
     },
 
     async selectFile() {
@@ -243,7 +238,7 @@ export default {
         const uploadResponse = await uploadImage(formData);
         const avatarPath = uploadResponse.data;
         //更新使用者頭像
-        await uploadAvatar({id: this.userId, avatar: avatarPath});
+        await uploadAvatar({avatar: avatarPath});
         this.userAvatar = URL.createObjectURL(file); //生成臨時的圖片網址，用來直接顯示圖片
         this.$store.commit('setUserAvatar', this.userAvatar);//設置state，讓header中的頭像也會跟著改變
         this.showPopupMessage('個人相片已更新', 'info');
@@ -261,7 +256,7 @@ export default {
           return;
         }
 
-        await this.getUserInfo(this.userId);
+        await this.getUserInfo();
 
         this.isAvatarModalVisible_step2 = false;
         this.isAvatarModalVisible_step1 = false;
@@ -277,7 +272,7 @@ export default {
       try {
         switch (item) {
           case 'name':
-            await this.getUserInfo(this.userId);
+            await this.getUserInfo();
             this.isRenameModalVisible = true;
             break;
           case 'password':
@@ -291,9 +286,9 @@ export default {
         this.showErrorMessage()
       }
     },
-    async getUserInfo(userId) {
-      const resp = await getCurrentUser(userId);
-      let {name, avatar} = resp;
+    async getUserInfo() {
+      const resp = await getCurrentUser();
+      const {name, avatar} = resp.data;
       this.$store.commit('setUserAvatar', avatar); //設置state，讓header中的頭像也會跟著改變
       this.$store.commit('setUserName', name);
       this.userAvatar = avatar;
@@ -304,7 +299,7 @@ export default {
   },
   mounted() {
     this.userId = this.$store.state.userData.user.id;
-    this.getUserInfo(this.userId);
+    this.getUserInfo();
     const {popupMessage, popupType} = this.$route.query;
 
     if (popupMessage) {

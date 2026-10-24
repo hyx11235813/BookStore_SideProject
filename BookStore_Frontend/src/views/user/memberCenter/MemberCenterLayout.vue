@@ -8,7 +8,7 @@
         <MemberCenterAside/>
       </aside>
       <div class="content">
-        <PersonalInfo_Nav/>
+        <PersonalInfoNav/>
         <router-view/>
       </div>
     </main>
@@ -17,13 +17,13 @@
 <script>
 import Header from '@/components/user/MemberCenterHeader.vue';
 import MemberCenterAside from '@/components/user/MemberCenterAside.vue';
-import PersonalInfo_Nav from './PersonalInfo_Nav.vue';
+import PersonalInfoNav from './PersonalInfoNav.vue';
 
 export default {
   components: {
     Header,
     MemberCenterAside,
-    PersonalInfo_Nav
+    PersonalInfoNav
   }
 };
 

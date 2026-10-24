@@ -19,7 +19,7 @@
                    @input="enableLiveCheck ? checkNewPassword() : null"
                    placeholder="">
             <label :class="['password-input__label',{error:newPasswordError}]">新密碼</label>
-            <img src="@/assets/images/eye-hide.svg" :src="isPasswordVisible ? eyeCloseImg:eyeOpenImg"
+            <img :src="isPasswordVisible ? eyeCloseImg:eyeOpenImg"
                  @click="togglePasswordVisibility('isPasswordVisible')"
                  alt="">
           </div>
@@ -82,12 +82,7 @@ export default {
       this.checkConfirmPasswordMatch();
       if (!this.isFormValid()) return;
 
-      let payload = {
-        id: this.$store.state.userData.user.id,
-        password: this.form.confirmPassword
-      };
-
-      await this.changePassword(payload);
+      await this.changePassword({password: this.form.confirmPassword});
     },
     checkConfirmPasswordMatch() {
       this.confirmPasswordError = this.form.confirmPassword !== this.form.newPassword;

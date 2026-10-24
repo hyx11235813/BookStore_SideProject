@@ -92,11 +92,11 @@ import BookCarousel from '@/views/user/home/BookCarousel.vue';
 import SuccessModal from '@/components/user/SuccessModal.vue';
 import {messagePopupMixin} from '@/mixins/messagePopupMixin';
 import MessagePopup from '@/components/MessagePopup.vue';
-import {addToShoppingCart, getUserCartInfo} from '@/api/cart';
+import addToCartMixin from '@/mixins/addToCartMixin';
 
 export default {
   components: {AddToCartModal: SuccessModal, BookCarousel, MessagePopup},
-  mixins: [messagePopupMixin],
+  mixins: [messagePopupMixin, addToCartMixin],
   data() {
     return {
       bookDetail: {
@@ -177,35 +177,8 @@ export default {
       return books;
     },
     async addToCart(bookId) {
-      console.log("run");
-      const userId = this.$store.state.userData.user.id || 0;
-      if (userId) {
-        await this.addToUserShoppingCart(userId, bookId, 1);
-      } else {
-        const cart = JSON.parse(localStorage.getItem('cart')) || {};
-        cart[bookId] = (cart[bookId] || 0) + 1;
-        localStorage.setItem('cart', JSON.stringify(cart));
-
-        const cartProductQuantity = Object.keys(cart).length;
-        this.$store.commit('setCartProductQuantity', cartProductQuantity);
-      }
+      await this.addBookToCart(bookId);
       this.$emit('showInfo');
-    },
-    async addToUserShoppingCart(userId, bookId, quantity) {
-      try {
-        const payload = [{userId, bookId, quantity: quantity}];
-        const res = await addToShoppingCart(payload);
-        if (res.code === 200) {
-          await this.getUserCartQuantity(userId);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async getUserCartQuantity(userId) {
-      const res = await getUserCartInfo(userId);
-      const cartQuantity = res.data.length || 0;
-      this.$store.commit('setCartProductQuantity', cartQuantity);
     },
     showInfo() {
       if (this.closeTimer) {

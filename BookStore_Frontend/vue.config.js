@@ -1,17 +1,15 @@
-const { defineConfig } = require("@vue/cli-service");
+const { defineConfig } = require('@vue/cli-service');
+
 module.exports = defineConfig({
   transpileDependencies: true,
-  lintOnSave: false,
-  // publicPath: '/static/',//npm run build 配置的資源引入路徑前綴
+  lintOnSave: 'warning',
   devServer: {
     port: 8080,
     proxy: {
+      // 前端開發時，把 /api 開頭的請求轉發給後端（後端網址可用 VUE_APP_API_PROXY_TARGET 覆寫）
       '/api': {
-        target: 'http://localhost:8081', // 後端Port
-        // pathRewrite: {
-        //   // '^/api': '/admin' // 重寫發送路徑
-        // }
+        target: process.env.VUE_APP_API_PROXY_TARGET || 'http://localhost:8081'
       }
     }
   }
-})
+});

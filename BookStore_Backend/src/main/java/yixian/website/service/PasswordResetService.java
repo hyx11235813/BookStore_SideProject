@@ -1,74 +1,62 @@
 package yixian.website.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import yixian.website.common.Result;
-import yixian.website.dto.ResetPasswordRequestDto;
+import yixian.website.entity.PasswordResetToken;
+import yixian.website.entity.User;
+import yixian.website.exception.EntityNotFoundException;
 import yixian.website.exception.InvalidDataException;
-import yixian.website.model.PasswordResetToken;
-import yixian.website.model.Users;
-import yixian.website.repository.PasswordResetRepository;
-import yixian.website.repository.UserRepository;
-import yixian.website.service.query.UserQueryService;
-import yixian.website.verification.RegexValidator;
+import yixian.website.repository.PasswordResetTokenRepository;
+import yixian.website.util.RandomCodes;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
-import java.util.List;
 
-import static yixian.website.util.DateTimeUtil.calculateExpiryDate;
-import static yixian.website.util.RandomUtil.generateRandomNumber;
-
+/**
+ * 忘記密碼流程：寄出驗證碼 -> 驗證驗證碼 -> 用驗證碼重設密碼
+ */
 @Service
+@RequiredArgsConstructor
 public class PasswordResetService {
+    private static final Duration CODE_VALIDITY = Duration.ofMinutes(30);
+
+    private final UserService userService;
     private final EmailService emailService;
-    private final UserQueryService userQueryService;
-    private final PasswordResetRepository passwordResetRepository;
-    private final UserRepository userRepository;
+    private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public PasswordResetService(EmailService emailService, UserQueryService userQueryService, PasswordResetRepository passwordResetRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.emailService = emailService;
-        this.userQueryService = userQueryService;
-        this.passwordResetRepository = passwordResetRepository;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+    @Transactional
+    public void sendResetCode(String email) {
+        User user = userService.findByEmail(email);
+        tokenRepository.deleteByUserId(user.getId());
+
+        String code = RandomCodes.sixDigits();
+        tokenRepository.save(new PasswordResetToken(code, user, Date.from(Instant.now().plus(CODE_VALIDITY))));
+        emailService.sendPasswordResetCodeEmail(user.getEmail(), code);
+    }
+
+    public void verifyCode(String email, String code) {
+        findValidToken(email, code);
     }
 
     @Transactional
-    public void handlePasswordResetToken(Users user) {
-        PasswordResetToken newToken = createPasswordResetToken(user);
-        emailService.sendPasswordResetTokenEmail(user.getEmail(), newToken.getToken());
-        deleteOldTokensByUser(user);
-        saveNewToken(newToken);
+    public void resetPassword(String email, String code, String newPassword) {
+        PasswordResetToken token = findValidToken(email, code);
+        User user = token.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        tokenRepository.deleteByUserId(user.getId());
     }
 
-    private void deleteOldTokensByUser(Users user) {
-        List<PasswordResetToken> tokens = passwordResetRepository.findByUser_Id(user.getId());
-        if (!tokens.isEmpty()) {
-            passwordResetRepository.deleteAll(tokens);
+    private PasswordResetToken findValidToken(String email, String code) {
+        User user = userService.findByEmail(email);
+        PasswordResetToken token = tokenRepository.findByTokenAndUserId(code, user.getId())
+                .orElseThrow(() -> new EntityNotFoundException("驗證碼錯誤"));
+        if (token.isExpiredAt(new Date())) {
+            throw new InvalidDataException("驗證碼已過期");
         }
+        return token;
     }
-
-    private PasswordResetToken createPasswordResetToken(Users user) {
-        String token = generateRandomNumber();
-        Date expireDate = calculateExpiryDate();
-        return new PasswordResetToken(token, user, expireDate);
-    }
-
-    private void saveNewToken(PasswordResetToken token) {
-        passwordResetRepository.save(token);
-    }
-
-    public Result resetPassword(ResetPasswordRequestDto requestDto) {
-        Users existingUser = userQueryService.findUserByEmail(requestDto.getEmail());
-        if (!RegexValidator.isValidPassword(requestDto.getPassword())) {
-            throw new InvalidDataException("密碼格式錯誤");
-        }
-        existingUser.setPassword(passwordEncoder.encode(requestDto.getPassword()));
-        userRepository.save(existingUser);
-
-        return Result.saveSuccess(null, "密碼已成功更新");
-    }
-
 }

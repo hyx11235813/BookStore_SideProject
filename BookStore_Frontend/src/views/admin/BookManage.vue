@@ -152,7 +152,7 @@ export default {
       this.$refs.bookForm.$refs.modalForm.validate(async (isValid) => {
         if (!isValid) return;
         try {
-          const form = this.$refs.bookForm.gerFormData();
+          const form = this.$refs.bookForm.getFormData();
           const formData = this.createFormData(form);
           //編輯
           if (this.modalType === 0) {
@@ -194,7 +194,7 @@ export default {
       }
       this.$message.success('新增成功');
 
-      const {totalPages} = await getBooks(this.currentPage, this.pageSize);
+      const {data: {totalPages}} = await getBooks(this.currentPage, this.pageSize);
       this.currentPage = totalPages;
       await this.getBooks(this.currentPage, this.pageSize);  // 請求最後一頁的資料
       this.closeAddBookModal();
@@ -225,7 +225,7 @@ export default {
         formData.append('uploadBookCover', form.uploadBookCover);
       }
       if (form.api_bookCoverUrl) {
-        formData.append('api_bookCoverUrl', form.api_bookCoverUrl);
+        formData.append('coverUrl', form.api_bookCoverUrl);
       }
       return formData;
     },
@@ -255,8 +255,8 @@ export default {
     },
 
     async getBooks(currentPage, pageSize) {
-      const books = await getBooks(currentPage, pageSize);
-      const content = books.content || [];
+      const {data: books} = await getBooks(currentPage, pageSize);
+      const content = books?.content || [];
 
       // 若當前的頁數沒有資料，且不是第一頁，則往前翻頁
       if (content.length === 0 && this.currentPage > 1) {
@@ -265,7 +265,7 @@ export default {
       }
 
       this.tableData = content;
-      this.totalItems = books.totalElements;
+      this.totalItems = books?.totalElements ?? 0;
     }
   },
   mounted() {

@@ -5,16 +5,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import yixian.website.common.ErrorMessages;
-import yixian.website.exception.InvalidDataException;
-import yixian.website.model.PasswordResetToken;
-import yixian.website.model.Users;
-import yixian.website.repository.PasswordResetRepository;
-import yixian.website.util.CommonUtils;
-import yixian.website.verification.RegexValidator;
-
-import java.util.Date;
 
 @Service
 public class EmailService {
@@ -23,29 +13,23 @@ public class EmailService {
     private static final String PASSWORD_RESET_BODY_TEMPLATE = "您正在修改密碼，驗證碼為：%s\n請在30分內完成驗證。";
 
     private final JavaMailSender javaMailSender;
-    private final PasswordResetRepository passwordResetRepository;
+    private final String baseUrl;
 
-    @Value("${app.url}")
-    private String url;
-
-    public EmailService(JavaMailSender javaMailSender, PasswordResetRepository passwordResetRepository) {
+    public EmailService(JavaMailSender javaMailSender, @Value("${app.url}") String baseUrl) {
         this.javaMailSender = javaMailSender;
-        this.passwordResetRepository = passwordResetRepository;
+        this.baseUrl = baseUrl;
     }
+
     @Async
     public void sendActivationEmail(String email, String activationCode) {
-        String activationLink = String.format("%s/api/email/activate/%s", url, activationCode);
-        String messageBody = "請點擊以下連結進行驗證：" + activationLink;
-        sendEmail(email, ACTIVATION_SUBJECT, messageBody);
+        String activationLink = String.format("%s/api/email/activate/%s", baseUrl, activationCode);
+        sendEmail(email, ACTIVATION_SUBJECT, "請點擊以下連結進行驗證：" + activationLink);
     }
 
-    public void sendPasswordResetTokenEmail(String email, String token) {
-        if (!RegexValidator.isValidEmail(email)) {
-            throw new InvalidDataException(email, ",信箱格式錯誤");
-        }
-        String subject = String.format(PASSWORD_RESET_SUBJECT_TEMPLATE, token);
-        String body = String.format(PASSWORD_RESET_BODY_TEMPLATE, token);
-        sendEmail(email, subject, body);
+    public void sendPasswordResetCodeEmail(String email, String code) {
+        sendEmail(email,
+                String.format(PASSWORD_RESET_SUBJECT_TEMPLATE, code),
+                String.format(PASSWORD_RESET_BODY_TEMPLATE, code));
     }
 
     private void sendEmail(String to, String subject, String body) {

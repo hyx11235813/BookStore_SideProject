@@ -54,7 +54,7 @@ export default {
   methods: {
     async submit() {
       try {
-        const isMatched = await matchPassword({password: this.password});
+        const {data: isMatched} = await matchPassword({password: this.password});
         this.showHint = false;
         if (isMatched) {
           const target = this.$route.query.target || '/';

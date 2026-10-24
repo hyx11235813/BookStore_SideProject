@@ -108,7 +108,7 @@ export default {
         Cat: this.selectedCategory || ''
       };
       //先轉爲Array排除掉空的value，再轉回物件
-      const filteredQuery = Object.fromEntries(Object.entries(query).filter(([_, value]) => value));
+      const filteredQuery = Object.fromEntries(Object.entries(query).filter(([, value]) => value));
       this.$router.replace({
         name: 'search',
         query: filteredQuery //透過watch來監聽

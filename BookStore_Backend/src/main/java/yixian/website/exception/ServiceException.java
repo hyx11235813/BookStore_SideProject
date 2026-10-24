@@ -1,26 +1,17 @@
 package yixian.website.exception;
 
-import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
-@Getter
-public class ServiceException extends RuntimeException {
-
-    private final Integer code;
+/**
+ * 500 Internal Server Error：伺服器端處理失敗
+ */
+public class ServiceException extends ApiException {
 
     public ServiceException(String message) {
-        super(message);
-        this.code = 500;
+        this(message, null);
     }
 
     public ServiceException(String message, Throwable cause) {
-        super(message, cause);
-        this.code = 500;
+        super(HttpStatus.INTERNAL_SERVER_ERROR, message, null, cause);
     }
-
-
-    public ServiceException(Integer code, String message) {
-        super(message);
-        this.code = code;
-    }
-
 }

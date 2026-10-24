@@ -1,56 +1,52 @@
 package yixian.website.service;
 
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import yixian.website.model.Users;
+import org.springframework.transaction.annotation.Transactional;
+import yixian.website.dto.request.LoginRequest;
+import yixian.website.dto.response.LoginResponse;
+import yixian.website.entity.User;
+import yixian.website.exception.UnauthorizedException;
 import yixian.website.repository.UserRepository;
-import yixian.website.common.Code;
-import yixian.website.common.ErrorMessages;
-import yixian.website.exception.InvalidDataException;
-import yixian.website.exception.ServiceException;
-import yixian.website.util.DateTimeUtil;
-import yixian.website.util.JwtUtil;
-import yixian.website.util.TokenUtils;
+import yixian.website.security.JwtService;
+
+import java.util.Date;
+import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    /**
+     * 帳號尚未開通時只回傳使用者狀態，不發放 token
+     */
+    @Transactional
+    public LoginResponse login(LoginRequest request) {
+        User user = findByAccountOrEmail(request.loginIdentifier())
+                .filter(found -> passwordEncoder.matches(request.password(), found.getPassword()))
+                .orElseThrow(() -> new UnauthorizedException("帳號或密碼錯誤"));
 
-    public Users login(Users user) {
-        Users existingUser = findUserByIdentifier(user.getLoginIdentifier());
-        validatePassword(user.getPassword(), existingUser.getPassword());
-        updateLoginInfo(existingUser);
-        return existingUser;
-    }
-
-    private Users findUserByIdentifier(String identifier) {
-        return userRepository.findUserByAccount(identifier)
-                .or(() -> userRepository.findUserByEmail(identifier))
-                .orElseThrow(() -> new ServiceException(Code.UNAUTHORIZED, "帳號或信箱錯誤"));
-    }
-
-
-    public void validatePassword(String inputPassword, String storedPassword) {
-        if (!StringUtils.hasText(inputPassword)) {
-            throw new InvalidDataException("密碼輸入不得為空");
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            return toResponse(user, null);
         }
-        if (!passwordEncoder.matches(inputPassword, storedPassword)) {
-            throw new ServiceException(Code.UNAUTHORIZED, "密碼錯誤");
-        }
+        recordLogin(user);
+        return toResponse(user, jwtService.createToken(user.getId()));
     }
 
-    private void updateLoginInfo(Users user) {
+    private Optional<User> findByAccountOrEmail(String identifier) {
+        return userRepository.findByAccount(identifier).or(() -> userRepository.findByEmail(identifier));
+    }
+
+    private void recordLogin(User user) {
         user.setLastLoginDate(user.getLoginDate());
-        user.setLoginDate(DateTimeUtil.taiwanCurrentTime());
-        user.setToken(TokenUtils.createToken(user.getId().toString(), JwtUtil.getSecretKey()));
-        userRepository.save(user);
+        user.setLoginDate(new Date());
+    }
+
+    private LoginResponse toResponse(User user, String token) {
+        return new LoginResponse(token, user.getId(), user.getName(), user.getRole(), user.getIsActive(), user.getAvatar());
     }
 }

@@ -147,14 +147,14 @@ export default {
       this.bookDataArray = books;
     },
     async getDeletedBooks(currentPage, pageSize) {
-      const books = await getDeletedBooks(currentPage, pageSize);
-      const {content} = books;
+      const {data: books} = await getDeletedBooks(currentPage, pageSize);
+      const content = books?.content || [];
       if (content.length === 0 && this.currentPage > 1) {
         this.currentPage -= 1;
         return this.getDeletedBooks(this.currentPage, this.pageSize);
       }
-      this.totalItems = books.totalElements;
-      this.bookDataArray = books.content;
+      this.totalItems = books?.totalElements ?? 0;
+      this.bookDataArray = content;
 
     }
   },

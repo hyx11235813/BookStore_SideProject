@@ -1,15 +1,18 @@
-import {getCurrentUser} from "@/api/user";
+import {getCurrentUser} from '@/api/user';
+import {guestCart, tokenStorage} from '@/utils/storage';
+
+const emptyUser = () => ({
+    id: '',
+    name: '',
+    avatar: ''
+});
 
 export default {
     state: {
-        user: {
-            id: '',
-            name: '',
-            avatar: '',
-        },
-
-        applyResetEmail: '',
-        cartProductQuantity: ''
+        user: emptyUser(),
+        applyResetEmail: '', //申請重設密碼的信箱
+        applyResetToken: '', //已通過驗證、可用來重設密碼的驗證碼
+        cartProductQuantity: 0
     },
     mutations: {
         setUserName(state, userName) {
@@ -22,41 +25,37 @@ export default {
             state.user = user;
         },
         setApplyResetEmail(state, email) {
-            state.applyResetEmail = email
+            state.applyResetEmail = email;
+        },
+        setApplyResetToken(state, token) {
+            state.applyResetToken = token;
         },
         setCartProductQuantity(state, number) {
-            state.cartProductQuantity = number
-        },
+            state.cartProductQuantity = number;
+        }
     },
     actions: {
         //獲取登入者資料
         async fetchUser({commit, state}) {
-            //先檢查state是否存有使用者資料，若無才發送請求獲取登入者資料
-            let isEmpty = Object.values(state.user).every(item => item === '');
-            if (isEmpty) {
-                try {
-                    const resp = await getCurrentUser();//後端透過請求頭的token獲取使用者資料
-                    if (resp.id === undefined) { //後端伺服器關閉在打開會更換token，如果這時候再用原本的token去獲取使用者會得不到資料，所以才要清除殘留的token
-                        localStorage.removeItem('token')
-                    }
-                    let payload = {
-                        id: resp.id,
-                        name: resp.name,
-                        avatar: resp.avatar
-                    };
-                    commit('setUserInfo', payload);
-                } catch (e) {
-                    throw new Error('獲取登入資料失敗');
+            if (state.user.id) return; //已經有使用者資料就不用再請求
+            try {
+                const resp = await getCurrentUser(); //後端透過請求頭的token獲取使用者資料
+                if (resp.code !== 200) {
+                    tokenStorage.clear(); //token 失效（例如後端更換了金鑰），清除殘留的token
+                    return;
                 }
+                const {id, name, avatar} = resp.data;
+                commit('setUserInfo', {id, name, avatar});
+            } catch (e) {
+                throw new Error('獲取登入資料失敗');
             }
         },
 
         logout({commit}) {
-            localStorage.removeItem('token')
-            localStorage.removeItem('cart')
-            commit('setUserInfo', '')
-            commit('setCartProductQuantity', 0)
-
+            tokenStorage.clear();
+            guestCart.clear();
+            commit('setUserInfo', emptyUser());
+            commit('setCartProductQuantity', 0);
         }
     }
-}
+};

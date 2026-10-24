@@ -6,8 +6,8 @@
         <div class="grid-content bg-purple">
           <el-card class="user-info-card">
             <div class="user-info-card__wrapper">
-              <el-upload class="avatar-uploader" action='http://localhost:8080/api/file/upload'
-                         :headers='{ token: `${token}` }' :show-file-list="false" :on-success="handleAvatarSuccess"
+              <el-upload class="avatar-uploader" action='/api/file/upload'
+                         :headers='uploadHeaders' :show-file-list="false" :on-success="handleAvatarSuccess"
                          :before-upload="beforeAvatarUpload">
                 <img v-if="imageUrl" :src="imageUrl" class="avatar" alt="">
                 <i v-else class="el-icon-plus avatar-uploader-icon"></i>
@@ -50,6 +50,7 @@
 <script>
 import {getChartData, getUserById} from '@/api/admin';
 import {uploadAvatar} from '@/api/user';
+import {tokenStorage} from '@/utils/storage';
 import * as echarts from 'echarts';
 
 export default {
@@ -57,20 +58,21 @@ export default {
     return {
       countData: [],
       userId: '',
-      token: '',
       userName: '',
       role: '',
       lastLoginDate: '',
       imageUrl: ''
     };
   },
+  computed: {
+    uploadHeaders() {
+      return {token: tokenStorage.get()};
+    }
+  },
   methods: {
     async handleAvatarSuccess(resp, file) { //同時會調用後端的/file/upload把照片存到本地
       this.imageUrl = URL.createObjectURL(file.raw); //顯示圖片在頁面上
-      let formData = new FormData();
-      formData.append('id', this.userId);
-      formData.append('avatar', resp.data);
-      const {code} = await uploadAvatar(formData);
+      const {code} = await uploadAvatar({avatar: resp.data});
       if (code !== 200) {
         this.$message.error('更改頭像失敗，請稍後再試');
         return;
@@ -92,7 +94,6 @@ export default {
     }
   },
   async mounted() {
-    this.token = JSON.parse(localStorage.getItem('token'));
     const echarts1 = echarts.init(this.$refs.echarts1);//柱狀圖
     const echarts2 = echarts.init(this.$refs.echarts2);//餅圖
     const echarts3 = echarts.init(this.$refs.echarts3);//折線圖
@@ -126,12 +127,12 @@ export default {
               {
                 name: '上架數量',
                 type: 'bar',
-                data: barData.map(item => item.monthly_AddedBooks)
+                data: barData.map(item => item.monthlyAddedBooks)
               },
               {
                 name: '出售數量',
                 type: 'bar',
-                data: barData.map(item => item.monthly_Sales)
+                data: barData.map(item => item.monthlySales)
               }
             ]
           };
@@ -186,7 +187,7 @@ export default {
             },
             series: [
               {
-                data: barData.map(item => item.monthly_SalesPrice),
+                data: barData.map(item => item.monthlySalesPrice),
                 type: 'line'
               }
             ]

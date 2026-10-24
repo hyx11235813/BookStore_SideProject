@@ -85,6 +85,7 @@
 </template>
 <script>
 import {getUserCartInfo} from '@/api/cart';
+import {guestCart} from '@/utils/storage';
 
 export default {
   data() {
@@ -171,18 +172,16 @@ export default {
     },
     clearSearch() {
       this.searchValue = '';
-      const {q, ...query} = {...this.$route.query};
-      console.log(query);
+      const query = {...this.$route.query};
+      delete query.q;
       this.$router.replace({query});
     },
     async getUserCartQuantity(userId) {
-      //使用者購物車數量
-      const res = await getUserCartInfo(userId);
-      const userCartQuantity = res.data?.length ?? 0;
+      //使用者購物車數量（未登入沒有資料庫購物車，不需要發請求）
+      const userCartQuantity = userId ? (await getUserCartInfo(userId)).data?.length ?? 0 : 0;
 
       //localStorage購物車數量
-      const localCart = JSON.parse(localStorage.getItem('cart') || '{}');
-      const localCartQuantity = Object.keys(localCart).length;
+      const localCartQuantity = guestCart.count();
 
       const finalShowQuantity = userCartQuantity || localCartQuantity;
       this.$store.commit('setCartProductQuantity', finalShowQuantity);

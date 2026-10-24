@@ -45,21 +45,14 @@
   </div>
 </template>
 <script>
+import {formatDateTime} from '@/utils/format';
+
 export default {
   props: {
     data: Array
   },
   methods: {
-    formatTimestamp(time) {
-      if (!time) return '';
-      const date = new Date(time);
-      const year = date.getFullYear().toString();
-      const month = date.getMonth().toString().padEnd();
-      const day = date.getDate().toString().padEnd(2, '0');
-      const hour = date.getHours().toString().padEnd(2, '0');
-      const minute = date.getMinutes().toString().padEnd(2, '0');
-      return year + '-' + month + '-' + day + ' ' + hour + ':' + minute;
-    }
+    formatTimestamp: formatDateTime
   }
 };
 </script>

@@ -42,7 +42,7 @@
 import {requestResetPassword} from '@/api/user';
 import ValidCode from '@/components/ValidCode.vue';
 import lottie from 'lottie-web';
-import Steps from '@/views/user/resetPassword/ResetPassword_CommonSteps.vue';
+import Steps from '@/views/user/resetPassword/ResetPasswordSteps.vue';
 
 export default {
   components: {ValidCode, Steps},
@@ -117,7 +117,7 @@ export default {
       return !(this.isEmailError || this.isVerifyCodeError);
     },
     checkEmail() {
-      const EMAIL_REG = /[A-Za-z0-9\._%+\-]+@[A-Za-z0-9\.\-]+\.[A-Za-z]{2,}/; //信箱格式
+      const EMAIL_REG = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/; //信箱格式
       this.isEmailError = !EMAIL_REG.test(this.form.email);
     },
     checkVerifyCode() {

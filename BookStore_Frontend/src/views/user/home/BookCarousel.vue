@@ -33,10 +33,13 @@
   </div>
 </template>
 <script>
-import Swiper, {Navigation} from 'swiper';
+import Swiper from 'swiper';
 import 'swiper/css/swiper.css';
-import {addToShoppingCart, getUserCartInfo} from '/src/api/cart';
+import addToCartMixin from '@/mixins/addToCartMixin';
+import {slugify} from '@/utils/format';
+
 export default {
+  mixins: [addToCartMixin],
   data() {
     return {
     };
@@ -67,20 +70,14 @@ export default {
     }
   },
   methods: {
-    onImageError(){
+    onImageError(event) {
       event.target.src = require('@/assets/images/no-image.svg');
     },
     goToBookDetail(book) {
       if (!book.bookName || !book.isbn) return;
-      const slug = this.slugify(book.bookName);
+      const slug = slugify(book.bookName);
       window.location.href = `/product/detail/${slug}/${book.isbn}`;
     },
-    slugify(title) {
-      return title
-          .toLowerCase()
-          .replace(/ /g, '-');  // 將空格替換為連字符
-    },
-
     initSwiper() {
       if (this.swiper) {
         this.swiper.destroy(true, true);
@@ -90,7 +87,6 @@ export default {
 
       // const isDesktop = window.innerWidth >= 576;
       const config = {
-        modules: [Navigation],
         loop: true,
         navigation: {
           nextEl: '.swiper-button-next',
@@ -109,39 +105,9 @@ export default {
     },
 
     async addToCart(bookId) {
-      const userId = this.$store.state.userData.user.id || 0;
-      if (userId) {
-        await this.addToUserShoppingCart(userId, bookId, 1);
-      } else {
-        const cart = JSON.parse(localStorage.getItem('cart')) || {};
-        cart[bookId] = (cart[bookId] || 0) + 1;
-        localStorage.setItem('cart', JSON.stringify(cart));
-
-        const cartProductQuantity = Object.keys(cart).length;
-        this.$store.commit('setCartProductQuantity', cartProductQuantity);
-      }
+      await this.addBookToCart(bookId);
       this.$emit('showInfo');
-    },
-    async addToUserShoppingCart(userId, bookId, quantity) {
-      try {
-        const payload = [{userId, bookId, quantity: quantity}];
-        const res = await addToShoppingCart(payload);
-        if (res.code === 200) {
-          await this.getUserCartQuantity(userId);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async getUserCartQuantity(userId) {
-      const res = await getUserCartInfo(userId);
-      const cartQuantity = res.data.length || 0;
-      this.$store.commit('setCartProductQuantity', cartQuantity);
-    },
-
-    mounted() {
     }
-
   }
 };
 

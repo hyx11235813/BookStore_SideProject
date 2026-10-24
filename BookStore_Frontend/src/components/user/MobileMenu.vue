@@ -161,7 +161,8 @@ export default {
     clearSearch() {
       this.searchValue = '';
       if (!this.$route.query.q) return;
-      const {q, ...restQuery} = this.$route.query;
+      const restQuery = {...this.$route.query};
+      delete restQuery.q;
       this.$router.replace({query: restQuery}); //保留除了關鍵字以外的查詢條件
     }
 

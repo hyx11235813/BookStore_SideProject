@@ -36,7 +36,7 @@ export default {
   }, methods: {
     handleCommand(command) {
       if (command === 'logout') {
-        localStorage.removeItem('token')
+        this.$store.dispatch('logout')
         this.$router.push('/login')
       }
       if (command === 'personalInfo' && this.$route.path !== '/member-center/personal-info') {

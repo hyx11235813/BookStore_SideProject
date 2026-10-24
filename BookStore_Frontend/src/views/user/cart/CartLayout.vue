@@ -4,19 +4,19 @@
       <HomeHeader/>
     </header>
     <main>
-      <Cart_Sm_Screen class="cart_Sm_Screen" v-if="isSmallView"/>
-      <Cart_Lg_Screen class="cart_Lg_Screen" v-else/>
+      <CartSmallScreen class="cart_Sm_Screen" v-if="isSmallView"/>
+      <CartLargeScreen class="cart_Lg_Screen" v-else/>
     </main>
   </div>
 </template>
 
 <script>
 import HomeHeader from '@/components/user/HomeCommonHeader.vue';
-import Cart_Lg_Screen from '@/views/user/cart/Cart_Lg_Screen.vue';
-import Cart_Sm_Screen from '@/views/user/cart/Cart_Sm_Screen.vue';
+import CartLargeScreen from '@/views/user/cart/CartLargeScreen.vue';
+import CartSmallScreen from '@/views/user/cart/CartSmallScreen.vue';
 
 export default {
-  components: {Cart_Lg_Screen, Cart_Sm_Screen, HomeHeader},
+  components: {CartLargeScreen, CartSmallScreen, HomeHeader},
   data() {
     return {
       isSmallView: window.innerWidth <= 576

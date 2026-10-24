@@ -37,13 +37,14 @@
 </template>
 <script>
 import {getTop100NewlyReleasedBooks, getTop100SalesBooks, getBooks, getBookById} from '@/api/book';
-import {addToShoppingCart, getUserCartInfo} from '/src/api/cart';
-import AddToCartModal from '@/components/user/addToCartModal.vue';
+import addToCartMixin from '@/mixins/addToCartMixin';
+import {slugify} from '@/utils/format';
+import AddToCartModal from '@/components/user/AddToCartModal.vue';
 import MessagePopup from '@/components/MessagePopup.vue';
 import {messagePopupMixin} from '@/mixins/messagePopupMixin';
 
 export default {
-  mixins: [messagePopupMixin],
+  mixins: [messagePopupMixin, addToCartMixin],
   components: {MessagePopup, AddToCartModal: AddToCartModal},
   data() {
     return {
@@ -68,7 +69,7 @@ export default {
         }
   },
   methods: {
-    onImageError() {
+    onImageError(event) {
       event.target.src = require('@/assets/images/no-image.svg');
     },
     initObservers() {
@@ -163,14 +164,9 @@ export default {
     },
     generateBookUrl(book) {
       if (book.bookName === undefined) return;
-      let slug = this.slugify(book.bookName);
+      const slug = slugify(book.bookName);
       let url = `/product/detail/${slug}/${book.isbn}`;
       this.$router.push(url);
-    },
-    slugify(title) {
-      return title
-          .toLowerCase()
-          .replace(/ /g, '-');  // 將空格替換為連字符
     },
     getResultText() {
       if (this.books.length > 0 && this.query) {
@@ -186,52 +182,13 @@ export default {
     async addToCart(bookId) {
       try {
         const book = await getBookById(bookId);
-        const userId = this.$store.state.userData.user.id || 0;
-        //如果有登入，更新資料庫
-        if (userId) {
-          await this.addToUserShoppingCart(userId, book);
-          return;
-        }
-        //如果沒登入，更新localStorage
-        const cart = JSON.parse(localStorage.getItem('cart')) || {};
-        const bookInventory = book.data.quantity || 0;
-        const cartBookQuantity = cart[bookId] || 0;
-
-        if (cartBookQuantity < bookInventory) {
-          cart[bookId] = cartBookQuantity + 1;
-        }
-        localStorage.setItem('cart', JSON.stringify(cart));
-        let cartProductQuantity = Object.keys(cart).length;
-        this.openAddToCartModal(book);
-        this.$store.commit('setCartProductQuantity', cartProductQuantity);
-      } catch (error) {
-
-      }
-
-    },
-    async addToUserShoppingCart(userId, book) {
-      try {
-        let payload = [{
-          userId: userId,
-          bookId: book.data.id,
-          quantity: 1
-        }];
-        const res = await addToShoppingCart(payload);
-        if (res.code !== 200) {
+        const maxQuantity = book.data.quantity || 0; //未登入時，購物車內的數量不能超過庫存
+        const added = await this.addBookToCart(bookId, {maxQuantity});
+        if (!added) {
           this.showErrorMessage();
           return;
         }
-        await this.getUserCartQuantity(userId);
         this.openAddToCartModal(book);
-      } catch (error) {
-        this.showErrorMessage();
-        console.warn(error);
-      }
-    },
-    async getUserCartQuantity(userId) {
-      try {
-        const userCartProductQuantity = await getUserCartInfo(userId).then(res => res.data?.length || 0);
-        this.$store.commit('setCartProductQuantity', userCartProductQuantity);
       } catch (error) {
         console.warn(error);
       }

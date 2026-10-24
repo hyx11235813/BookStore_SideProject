@@ -1,13 +1,13 @@
 package yixian.website.exception;
 
-import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
-@Getter
-public class EntityNotFoundException extends RuntimeException {
-    private final Integer code;
+/**
+ * 404 Not Found：查詢的資源不存在
+ */
+public class EntityNotFoundException extends ApiException {
 
     public EntityNotFoundException(String message) {
-        super(message);
-        this.code = 404;
+        super(HttpStatus.NOT_FOUND, message, null, null);
     }
 }

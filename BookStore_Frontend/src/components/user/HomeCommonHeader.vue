@@ -7,6 +7,7 @@
 <script>
 import MobileMenu from '@/components/user/MobileMenu.vue';
 import DesktopMenu from '@/components/user/DesktopMenu.vue';
+import {guestCart} from '@/utils/storage';
 
 export default {
   components: {
@@ -18,9 +19,7 @@ export default {
   },
   methods: {
     countCartQuantity() {
-      let cart = JSON.parse(localStorage.getItem('cart')) || {};
-      let cartQuantity = Object.keys(cart).length;
-      this.$store.commit('setCartProductQuantity', cartQuantity);
+      this.$store.commit('setCartProductQuantity', guestCart.count());
     }
   }
 

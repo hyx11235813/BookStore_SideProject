@@ -10,7 +10,7 @@
       <form class="card__form">
         <div class="card__form-input-field">
           <input
-              v-for="(_,index) in form.token"
+              v-for="(_,index) in form.token" :key="index"
               v-model="form.token[index]"
               :ref="'input'+index"
               @input="onInput(index)"
@@ -33,7 +33,7 @@
 </template>
 <script>
 import {requestResetPassword, verifyToken} from '@/api/user';
-import Steps from '@/views/user/resetPassword/ResetPassword_CommonSteps.vue';
+import Steps from '@/views/user/resetPassword/ResetPasswordSteps.vue';
 import lottie from 'lottie-web';
 
 
@@ -67,14 +67,16 @@ export default {
     async submit() {
       try {
         this.startLoading();
-        const resp = await verifyToken({email: this.form.email, token: this.form.token.join('')});
+        const token = this.form.token.join('');
+        const resp = await verifyToken({email: this.form.email, token});
         await this.delay(3000);
         if (resp.code !== 200) {
           this.form.token = Array(6).fill('');
           this.focusInput(0);
-          this.showMessage('驗證碼錯誤');
+          this.showMessage(resp.code === 400 ? '驗證碼已過期，請重新發送' : '驗證碼錯誤');
           return;
         }
+        this.$store.commit('setApplyResetToken', token); //重設密碼時需要帶上這組驗證碼
         this.$router.push('/forgot-password/reset-password');
       } catch (error) {
         console.error(error);
@@ -106,8 +108,7 @@ export default {
     async resendEmail() {
       try {
         this.startLoading();
-        let payload = JSON.stringify({email: this.form.email});
-        const resp = await requestResetPassword(payload);
+        const resp = await requestResetPassword({email: this.form.email});
         if (resp.code !== 200) return;
 
         await this.delay(1000);

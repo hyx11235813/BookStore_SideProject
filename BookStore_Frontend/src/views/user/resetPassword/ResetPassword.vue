@@ -39,13 +39,13 @@
 </template>
 <script>
 import {resetPassword} from '@/api/user';
-import Steps from '@/views/user/resetPassword/ResetPassword_CommonSteps.vue';
+import Steps from '@/views/user/resetPassword/ResetPasswordSteps.vue';
 
 export default {
   // 如果沒有email，返回重設密碼第一個步驟
   beforeRouteEnter(to, from, next) {
     next(vm => {
-      if (!vm.$store.state.userData.applyResetEmail) {
+      if (!vm.$store.state.userData.applyResetEmail || !vm.$store.state.userData.applyResetToken) {
         vm.$router.push('/forgot-password');
       }
     });
@@ -67,6 +67,7 @@ export default {
       try {
         const payload = {
           email: this.$store.state.userData.applyResetEmail,
+          token: this.$store.state.userData.applyResetToken,
           password: this.form.password
         };
         const resp = await resetPassword(payload);
@@ -79,6 +80,7 @@ export default {
 
         this.$router.push('/forgot-password/reset-password-success');
         this.$store.commit('setApplyResetEmail', '');
+        this.$store.commit('setApplyResetToken', '');
       } catch (error) {
         console.error(error);
         await this.showMsg('系統錯誤,請稍後再試');

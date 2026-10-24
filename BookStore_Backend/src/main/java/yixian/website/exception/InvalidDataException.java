@@ -1,21 +1,17 @@
 package yixian.website.exception;
 
-import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
-@Getter
-public class InvalidDataException extends RuntimeException {
-    private final Integer code;
-    private Object data;
+/**
+ * 400 Bad Request：請求有錯誤（例如資料格式或內容不正確）
+ */
+public class InvalidDataException extends ApiException {
 
     public InvalidDataException(String message) {
-        super(message);
-        this.code = 400;
+        this(message, null);
     }
 
-
     public InvalidDataException(String message, Object data) {
-        super(message);
-        this.code = 400;
-        this.data = data;
+        super(HttpStatus.BAD_REQUEST, message, data, null);
     }
 }

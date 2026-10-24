@@ -1,65 +1,49 @@
 package yixian.website.repository;
 
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-import yixian.website.model.Book;
+import yixian.website.entity.Book;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-
 public interface BookRepository extends JpaRepository<Book, Integer> {
 
-    //計算某日期之後新增的數量
-    long countByCreationDateAfter(Date date);
+    //計算某日期(含)之後新增的書籍數量
+    long countByCreationDateGreaterThanEqual(Date from);
 
-    //計算某日期之内新增的書籍數量
-    long countByCreationDateBetween(Date startOfMonth, Date endOfMonth);
+    //計算 [from, to) 區間内新增的書籍數量
+    @Query("SELECT COUNT(b) FROM Book b WHERE b.creationDate >= :from AND b.creationDate < :to")
+    long countCreatedBetween(@Param("from") Date from, @Param("to") Date to);
 
-    Page<Book> findByIsDeletedFalse(Pageable pageable);
+    Page<Book> findByIsDeleted(Boolean isDeleted, Pageable pageable);
 
-    Page<Book> findByIsDeletedTrue(Pageable pageable);
-
-
-    Optional<Book> findBookByIsbn(String isbn);
+    Optional<Book> findByIsbn(String isbn);
 
     //根據category獲取相同類型,且銷量最好的前10名書籍
-    List<Book> findTop10ByCategoryOrderBySalesDesc(String category);
-
+    List<Book> findTop10ByCategoryAndIsDeletedFalseOrderBySalesDesc(String category);
 
     //找出前10銷售量最高的書籍
-    List<Book> findTop10ByOrderBySalesDesc();
+    List<Book> findTop10ByIsDeletedFalseOrderBySalesDesc();
 
     //找出前10名新上架的書籍
-    List<Book> findTop10ByOrderByCreationDateDesc();
+    List<Book> findTop10ByIsDeletedFalseOrderByCreationDateDesc();
 
-    @Query(value = "SELECT * FROM Book WHERE 1=1 " +
+    //使用者端搜尋，只會搜尋到未下架的書籍
+    @Query(value = "SELECT * FROM book WHERE is_deleted = 0 " +
             "AND (:cat IS NULL OR category LIKE CONCAT('%', :cat, '%')) " +
             "AND (:query IS NULL OR :query = '' OR (author LIKE CONCAT('%', :query, '%') " +
             "OR book_name LIKE CONCAT('%', :query, '%') " +
             "OR isbn LIKE CONCAT(:query, '%') " +
             "OR publisher LIKE CONCAT('%', :query, '%')))",
             nativeQuery = true)
-    Page<Book> findTop100ByParams(@Param("cat") String cat, @Param("query") String query, Pageable pageable);
+    Page<Book> searchPublicBooks(@Param("cat") String cat, @Param("query") String query, Pageable pageable);
 
-    @Query(value = "SELECT * FROM Book WHERE 1=1 " +
-            "AND (:cat IS NULL OR category LIKE CONCAT('%', :cat, '%')) " +
-            "AND (:query IS NULL OR :query = '' OR (author LIKE CONCAT('%', :query, '%') " +
-            "OR book_name LIKE CONCAT('%', :query, '%') " +
-            "OR isbn LIKE CONCAT(:query, '%') " +
-            "OR publisher LIKE CONCAT('%', :query, '%')))",
-            nativeQuery = true)
-    Page<Book> findBooksByParams(@Param("cat") String cat, @Param("query") String query, Pageable pageable);
-
-
-
+    //管理端搜尋
     @Query(value = "SELECT * FROM book WHERE 1=1 " +
             "AND (:isbn IS NULL OR isbn = :isbn) " +
             "AND (:bookName IS NULL OR book_name LIKE CONCAT('%', :bookName, '%')) " +
@@ -83,5 +67,4 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
                                    @Param("editDateEnd") String editDateEnd,
                                    @Param("isDeleted") Boolean isDeleted,
                                    Pageable pageable);
-
 }

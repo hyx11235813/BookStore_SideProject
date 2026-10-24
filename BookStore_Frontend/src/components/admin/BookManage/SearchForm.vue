@@ -1,6 +1,6 @@
 <template>
   <div class="searchForm">
-    <el-dialog class="searchForm__dialog" width=500px title="查詢" :visible.sync="visible"
+    <el-dialog class="searchForm__dialog" width=500px title="查詢" :visible="visible" @update:visible="$emit('update:visible', $event)"
                :before-close="closeSearchModal">
       <el-form class="searchForm__form" ref="searchForm" :model="searchForm" label-width="100px">
         <el-form-item label="ISBN：">

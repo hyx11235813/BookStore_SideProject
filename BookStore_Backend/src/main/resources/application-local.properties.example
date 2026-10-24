@@ -1,0 +1,8 @@
+# 複製為 application-local.properties（已被 .gitignore 忽略），並填入自己的值。
+# 啟動方式：mvnw spring-boot:run -Dspring-boot.run.profiles=local
+DB_HOST=localhost
+DB_USERNAME=sa
+DB_PASSWORD=change-me
+JWT_SECRET=replace-with-a-random-string-of-at-least-32-characters
+MAIL_USERNAME=your-account@gmail.com
+MAIL_PASSWORD=your-gmail-app-password
